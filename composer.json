@@ -1,0 +1,7 @@
+{
+    "require": {
+        "spatie/image-optimizer": "^1.8",
+        "symfony/process": "^8.0",
+        "symfony/filesystem": "^8.0"
+    }
+}
