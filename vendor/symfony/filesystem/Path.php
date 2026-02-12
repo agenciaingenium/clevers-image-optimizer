@@ -78,7 +78,7 @@ final class Path
 
         // Replace "~" with user's home directory.
         if ('~' === $path[0]) {
-            $path = Path . phpself::getHomeDirectory() . substr($path, 1);
+            $path = self::getHomeDirectory().substr($path, 1);
         }
 
         $path = self::normalize($path);
@@ -195,7 +195,7 @@ final class Path
 
         // For >= Windows8 support
         if (getenv('HOMEDRIVE') && getenv('HOMEPATH')) {
-            return self::canonicalize(Path . phpgetenv('HOMEDRIVE') . getenv('HOMEPATH'));
+            return self::canonicalize(getenv('HOMEDRIVE').getenv('HOMEPATH'));
         }
 
         throw new RuntimeException("Cannot find the home directory path: Your environment or operating system isn't supported.");
@@ -355,7 +355,7 @@ final class Path
             return $path.(str_ends_with($path, '.') ? '' : '.').$extension;
         }
 
-        return Path . phpsubstr($path, 0, -\strlen($actualExtension)) . $extension;
+        return substr($path, 0, -\strlen($actualExtension)).$extension;
     }
 
     /**
@@ -435,7 +435,7 @@ final class Path
             $scheme = '';
         }
 
-        return $scheme.self::canonicalize(rtrim($basePath, '/\\') . 'Path.php/' .$path);
+        return $scheme.self::canonicalize(rtrim($basePath, '/\\').'/'.$path);
     }
 
     /**
@@ -694,7 +694,7 @@ final class Path
         // Don't append a slash for the root "/", because then that root
         // won't be discovered as common prefix ("//" is not a prefix of
         // "/foobar/").
-        return str_starts_with($ofPath.'/', rtrim($basePath, '/') . 'Path.php/');
+        return str_starts_with($ofPath.'/', rtrim($basePath, '/').'/');
     }
 
     /**

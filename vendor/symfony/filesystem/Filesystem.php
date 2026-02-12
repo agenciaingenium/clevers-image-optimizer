@@ -51,12 +51,12 @@ class Filesystem
         if ($doCopy) {
             // https://bugs.php.net/64634
             if (!$source = self::box('fopen', $originFile, 'r')) {
-                throw new IOException(Filesystem . php\sprintf('Failed to copy "%s" to "%s" because source file could not be opened for reading: ', $originFile, $targetFile) . self::$lastError, 0, null, $originFile);
+                throw new IOException(\sprintf('Failed to copy "%s" to "%s" because source file could not be opened for reading: ', $originFile, $targetFile).self::$lastError, 0, null, $originFile);
             }
 
             // Stream context created to allow files overwrite when using FTP stream wrapper - disabled by default
             if (!$target = self::box('fopen', $targetFile, 'w', false, stream_context_create(['ftp' => ['overwrite' => true]]))) {
-                throw new IOException(Filesystem . php\sprintf('Failed to copy "%s" to "%s" because target file could not be opened for writing: ', $originFile, $targetFile) . self::$lastError, 0, null, $originFile);
+                throw new IOException(\sprintf('Failed to copy "%s" to "%s" because target file could not be opened for writing: ', $originFile, $targetFile).self::$lastError, 0, null, $originFile);
             }
 
             $bytesCopied = stream_copy_to_stream($source, $target);
@@ -95,7 +95,7 @@ class Filesystem
             }
 
             if (!self::box('mkdir', $dir, $mode, true) && !is_dir($dir)) {
-                throw new IOException(Filesystem . php\sprintf('Failed to create "%s": ', $dir) . self::$lastError, 0, null, $dir);
+                throw new IOException(\sprintf('Failed to create "%s": ', $dir).self::$lastError, 0, null, $dir);
             }
         }
     }
@@ -132,7 +132,7 @@ class Filesystem
     {
         foreach ($this->toIterable($files) as $file) {
             if (!($time ? self::box('touch', $file, $time, $atime) : self::box('touch', $file))) {
-                throw new IOException(Filesystem . php\sprintf('Failed to touch "%s": ', $file) . self::$lastError, 0, null, $file);
+                throw new IOException(\sprintf('Failed to touch "%s": ', $file).self::$lastError, 0, null, $file);
             }
         }
     }
@@ -160,7 +160,7 @@ class Filesystem
             if (is_link($file)) {
                 // See https://bugs.php.net/52176
                 if (!(self::box('unlink', $file) || '\\' !== \DIRECTORY_SEPARATOR || self::box('rmdir', $file)) && file_exists($file)) {
-                    throw new IOException(Filesystem . php\sprintf('Failed to remove symlink "%s": ', $file) . self::$lastError);
+                    throw new IOException(\sprintf('Failed to remove symlink "%s": ', $file).self::$lastError);
                 }
             } elseif (is_dir($file)) {
                 if (!$isRecursive) {
@@ -191,10 +191,10 @@ class Filesystem
                         $file = $origFile;
                     }
 
-                    throw new IOException(Filesystem . php\sprintf('Failed to remove directory "%s": ', $file) . $lastError);
+                    throw new IOException(\sprintf('Failed to remove directory "%s": ', $file).$lastError);
                 }
             } elseif (!self::box('unlink', $file) && ((self::$lastError && str_contains(self::$lastError, 'Permission denied')) || file_exists($file))) {
-                throw new IOException(Filesystem . php\sprintf('Failed to remove file "%s": ', $file) . self::$lastError);
+                throw new IOException(\sprintf('Failed to remove file "%s": ', $file).self::$lastError);
             }
         }
     }
@@ -212,7 +212,7 @@ class Filesystem
     {
         foreach ($this->toIterable($files) as $file) {
             if (!self::box('chmod', $file, $mode & ~$umask)) {
-                throw new IOException(Filesystem . php\sprintf('Failed to chmod file "%s": ', $file) . self::$lastError, 0, null, $file);
+                throw new IOException(\sprintf('Failed to chmod file "%s": ', $file).self::$lastError, 0, null, $file);
             }
             if ($recursive && is_dir($file) && !is_link($file)) {
                 $this->chmod(new \FilesystemIterator($file), $mode, $umask, true);
@@ -240,11 +240,11 @@ class Filesystem
             }
             if (is_link($file) && \function_exists('lchown')) {
                 if (!self::box('lchown', $file, $user)) {
-                    throw new IOException(Filesystem . php\sprintf('Failed to chown file "%s": ', $file) . self::$lastError, 0, null, $file);
+                    throw new IOException(\sprintf('Failed to chown file "%s": ', $file).self::$lastError, 0, null, $file);
                 }
             } else {
                 if (!self::box('chown', $file, $user)) {
-                    throw new IOException(Filesystem . php\sprintf('Failed to chown file "%s": ', $file) . self::$lastError, 0, null, $file);
+                    throw new IOException(\sprintf('Failed to chown file "%s": ', $file).self::$lastError, 0, null, $file);
                 }
             }
         }
@@ -270,11 +270,11 @@ class Filesystem
             }
             if (is_link($file) && \function_exists('lchgrp')) {
                 if (!self::box('lchgrp', $file, $group)) {
-                    throw new IOException(Filesystem . php\sprintf('Failed to chgrp file "%s": ', $file) . self::$lastError, 0, null, $file);
+                    throw new IOException(\sprintf('Failed to chgrp file "%s": ', $file).self::$lastError, 0, null, $file);
                 }
             } else {
                 if (!self::box('chgrp', $file, $group)) {
-                    throw new IOException(Filesystem . php\sprintf('Failed to chgrp file "%s": ', $file) . self::$lastError, 0, null, $file);
+                    throw new IOException(\sprintf('Failed to chgrp file "%s": ', $file).self::$lastError, 0, null, $file);
                 }
             }
         }
@@ -301,7 +301,7 @@ class Filesystem
 
                 return;
             }
-            throw new IOException(Filesystem . php\sprintf('Cannot rename "%s" to "%s": ', $origin, $target) . self::$lastError, 0, null, $target);
+            throw new IOException(\sprintf('Cannot rename "%s" to "%s": ', $origin, $target).self::$lastError, 0, null, $target);
         }
     }
 
@@ -399,7 +399,7 @@ class Filesystem
                 throw new IOException(\sprintf('Unable to create "%s" link due to error code 1314: \'A required privilege is not held by the client\'. Do you have the required Administrator-rights?', $linkType), 0, null, $target);
             }
         }
-        throw new IOException(Filesystem . php\sprintf('Failed to create "%s" link from "%s" to "%s": ', $linkType, $origin, $target) . self::$lastError, 0, null, $target);
+        throw new IOException(\sprintf('Failed to create "%s" link from "%s" to "%s": ', $linkType, $origin, $target).self::$lastError, 0, null, $target);
     }
 
     /**
@@ -475,7 +475,7 @@ class Filesystem
 
         if ($endDriveLetter && $startDriveLetter && $endDriveLetter != $startDriveLetter) {
             // End path is on another drive, so no relative path exists
-            return $endDriveLetter.':/'.($endPathArr ? implode('/', $endPathArr) . 'Filesystem.php/' : '');
+            return $endDriveLetter.':/'.($endPathArr ? implode('/', $endPathArr).'/' : '');
         }
 
         // Find for which directory the common path stops
@@ -661,7 +661,7 @@ class Filesystem
 
         try {
             if (false === self::box('file_put_contents', $tmpFile, $content)) {
-                throw new IOException(Filesystem . php\sprintf('Failed to write file "%s": ', $filename) . self::$lastError, 0, null, $filename);
+                throw new IOException(\sprintf('Failed to write file "%s": ', $filename).self::$lastError, 0, null, $filename);
             }
 
             self::box('chmod', $tmpFile, self::box('fileperms', $filename) ?: 0o666 & ~umask());
@@ -699,7 +699,7 @@ class Filesystem
         }
 
         if (false === self::box('file_put_contents', $filename, $content, \FILE_APPEND | ($lock ? \LOCK_EX : 0))) {
-            throw new IOException(Filesystem . php\sprintf('Failed to write file "%s": ', $filename) . self::$lastError, 0, null, $filename);
+            throw new IOException(\sprintf('Failed to write file "%s": ', $filename).self::$lastError, 0, null, $filename);
         }
     }
 
@@ -716,7 +716,7 @@ class Filesystem
 
         $content = self::box('file_get_contents', $filename);
         if (false === $content) {
-            throw new IOException(Filesystem . php\sprintf('Failed to read file "%s": ', $filename) . self::$lastError, 0, null, $filename);
+            throw new IOException(\sprintf('Failed to read file "%s": ', $filename).self::$lastError, 0, null, $filename);
         }
 
         return $content;
