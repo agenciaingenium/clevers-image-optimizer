@@ -135,6 +135,15 @@ class CIO_Optimizer
         ];
 
         $original = $base_dir . $metadata['file'];
+
+        // PENDIENTE 1: Validación de path traversal — garantiza que el path
+        // del archivo principal esté dentro del directorio de uploads.
+        $upload_basedir = realpath($upload_dir['basedir']);
+        $real_original  = realpath($original);
+        if ($real_original === false || strpos($real_original, $upload_basedir) !== 0) {
+            return new WP_Error('invalid_path', 'Path fuera del directorio de uploads.');
+        }
+
         if ($this->is_supported_image_path($original) && file_exists($original)) {
             $stats['original_size'] = (int) filesize($original);
 
@@ -261,16 +270,10 @@ class CIO_Optimizer
 
     public function sanitize_quality($value)
     {
-        $value = (int) $value;
-        if ($value < 0) {
-            return 0;
-        }
-
-        if ($value > 100) {
-            return 100;
-        }
-
-        return $value;
+        // PENDIENTE 2: Delegamos en CIO_Utils para eliminar la implementación duplicada.
+        // Usamos min=0 para mantener compatibilidad con llamadas y tests previos que
+        // esperan 0 para valores negativos.
+        return CIO_Utils::sanitize_quality($value, 0, 100, 80);
     }
 
     public function is_supported_image_path($file)
@@ -319,12 +322,39 @@ class CIO_Optimizer
 
     private function create_image_resource($file)
     {
-        $content = @file_get_contents($file);
-        if (!$content) {
+        // PENDIENTE 4: Reemplazamos la supresión de errores con @ por manejo
+        // explícito mediante set_error_handler para capturar fallos sin silenciarlos.
+        $read_error = null;
+        set_error_handler(static function ($errno, $errstr) use (&$read_error) {
+            $read_error = $errstr;
+            return true;
+        });
+        $content = file_get_contents($file);
+        restore_error_handler();
+
+        if ($content === false || $content === '') {
+            if ($read_error && defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
+                error_log('[Clever Image Optimizer] create_image_resource file_get_contents error: ' . $read_error);
+            }
             return null;
         }
 
-        return @imagecreatefromstring($content);
+        $parse_error = null;
+        set_error_handler(static function ($errno, $errstr) use (&$parse_error) {
+            $parse_error = $errstr;
+            return true;
+        });
+        $img = imagecreatefromstring($content);
+        restore_error_handler();
+
+        if ($img === false) {
+            if ($parse_error && defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
+                error_log('[Clever Image Optimizer] create_image_resource imagecreatefromstring error: ' . $parse_error);
+            }
+            return null;
+        }
+
+        return $img;
     }
 
     private function get_webp_path($file)

@@ -19,6 +19,11 @@ class CIO_Media_Library
         add_filter('handle_bulk_actions-upload', [$this, 'handle_bulk_action'], 10, 3);
 
         add_action('admin_notices', [$this, 'bulk_action_admin_notice']);
+
+        // PENDIENTE 3: Acción individual "Re-optimizar" en Media Library.
+        add_filter('media_row_actions', [$this, 'add_reoptimize_row_action'], 10, 2);
+        add_action('wp_ajax_cio_reoptimize_single', [$this, 'ajax_reoptimize_single']);
+        add_action('admin_footer-upload.php', [$this, 'reoptimize_js']);
     }
 
     public function add_column($columns)
@@ -115,5 +120,118 @@ class CIO_Media_Library
             '<div id="message" class="updated notice is-dismissible"><p>%s</p></div>',
             esc_html(sprintf(__('%d imágenes encoladas para optimización en background.', 'clevers-image-optimizer'), $count))
         );
+    }
+
+    // -------------------------------------------------------------------------
+    // PENDIENTE 3: Acción individual "Re-optimizar"
+    // -------------------------------------------------------------------------
+
+    /**
+     * Agrega la row action "Re-optimizar" en la lista de medios para imágenes JPEG/PNG.
+     *
+     * @param array    $actions Acciones existentes de la fila.
+     * @param \WP_Post $post    Post del attachment.
+     * @return array
+     */
+    public function add_reoptimize_row_action(array $actions, $post)
+    {
+        $mime = get_post_mime_type($post->ID);
+        if (!in_array($mime, ['image/jpeg', 'image/png'], true)) {
+            return $actions;
+        }
+
+        if (!current_user_can('upload_files') && !current_user_can('manage_options')) {
+            return $actions;
+        }
+
+        $nonce = wp_create_nonce('cio_reoptimize_' . $post->ID);
+        $label = esc_html__('Re-optimizar', 'clevers-image-optimizer');
+
+        $actions['cio_reoptimize'] = sprintf(
+            '<a href="#" class="cio-reoptimize-single" data-id="%d" data-nonce="%s">%s</a>',
+            esc_attr($post->ID),
+            esc_attr($nonce),
+            $label
+        );
+
+        return $actions;
+    }
+
+    /**
+     * Handler AJAX para re-optimizar un attachment individual.
+     * Verifica nonce y capacidad, luego encola el attachment.
+     */
+    public function ajax_reoptimize_single()
+    {
+        $attachment_id = isset($_POST['attachment_id']) ? absint($_POST['attachment_id']) : 0;
+
+        if (!$attachment_id) {
+            wp_send_json_error(['message' => __('ID de adjunto inválido.', 'clevers-image-optimizer')]);
+        }
+
+        // Verificar capacidad.
+        if (!current_user_can('upload_files') && !current_user_can('manage_options')) {
+            wp_send_json_error(['message' => __('No tienes permiso para realizar esta acción.', 'clevers-image-optimizer')]);
+        }
+
+        // Verificar nonce específico del attachment.
+        $nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
+        if (!wp_verify_nonce($nonce, 'cio_reoptimize_' . $attachment_id)) {
+            wp_send_json_error(['message' => __('Nonce inválido.', 'clevers-image-optimizer')]);
+        }
+
+        $queued = $this->optimizer->enqueue_attachment($attachment_id);
+
+        if ($queued) {
+            wp_send_json_success(['message' => __('Imagen encolada para re-optimización en background.', 'clevers-image-optimizer')]);
+        } else {
+            wp_send_json_error(['message' => __('No se pudo encolar la imagen (ya estaba en cola o ID inválido).', 'clevers-image-optimizer')]);
+        }
+    }
+
+    /**
+     * Imprime el script JS que gestiona los clicks en ".cio-reoptimize-single"
+     * y muestra feedback básico de éxito/error inline.
+     */
+    public function reoptimize_js()
+    {
+        ?>
+        <script>
+        (function($) {
+            $(document).on('click', '.cio-reoptimize-single', function(e) {
+                e.preventDefault();
+
+                var $link = $(this);
+                var attachmentId = $link.data('id');
+                var nonce = $link.data('nonce');
+
+                $link.text('<?php echo esc_js(__('Re-optimizando…', 'clevers-image-optimizer')); ?>');
+
+                $.post(ajaxurl, {
+                    action: 'cio_reoptimize_single',
+                    attachment_id: attachmentId,
+                    nonce: nonce
+                }, function(response) {
+                    if (response.success) {
+                        $link.replaceWith(
+                            '<span style="color:green;">' +
+                            '<?php echo esc_js(__('✓ Encolada', 'clevers-image-optimizer')); ?>' +
+                            '</span>'
+                        );
+                    } else {
+                        var msg = (response.data && response.data.message)
+                            ? response.data.message
+                            : '<?php echo esc_js(__('Error desconocido.', 'clevers-image-optimizer')); ?>';
+                        $link.replaceWith('<span style="color:red;">' + msg + '</span>');
+                    }
+                }).fail(function() {
+                    $link.replaceWith(
+                        '<span style="color:red;"><?php echo esc_js(__('Error de conexión.', 'clevers-image-optimizer')); ?></span>'
+                    );
+                });
+            });
+        }(jQuery));
+        </script>
+        <?php
     }
 }

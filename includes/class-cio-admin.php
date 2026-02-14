@@ -63,9 +63,8 @@ class CIO_Admin
 
     public function sanitize_quality($value)
     {
-        $value = absint($value);
-
-        return min($value, 100);
+        // PENDIENTE 2: Delegamos en CIO_Utils para eliminar la implementación duplicada.
+        return CIO_Utils::sanitize_quality($value, 0, 100, 80);
     }
 
     public function sanitize_batch_limit($value)
