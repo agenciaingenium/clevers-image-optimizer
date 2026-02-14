@@ -43,6 +43,20 @@ function cio_init()
 }
 add_action('plugins_loaded', 'cio_init', 20);
 
+register_activation_hook(__FILE__, function () {
+    $missing = [];
+
+    if (!extension_loaded('gd') && !extension_loaded('imagick')) {
+        $missing[] = __('Se requiere la extensión PHP <strong>GD</strong> o <strong>Imagick</strong> para generar imágenes WebP/AVIF.', 'clevers-image-optimizer');
+    }
+
+    if (!empty($missing)) {
+        $message  = '<p>' . implode('</p><p>', $missing) . '</p>';
+        $message .= '<p><a href="' . esc_url(admin_url('plugins.php')) . '">' . __('&laquo; Volver a plugins', 'clevers-image-optimizer') . '</a></p>';
+        wp_die($message, __('Clever Image Optimizer – Requisitos no cumplidos', 'clevers-image-optimizer'));
+    }
+});
+
 register_deactivation_hook(__FILE__, function () {
     $timestamp = wp_next_scheduled(CIO_Optimizer::CRON_HOOK);
     if ($timestamp) {
