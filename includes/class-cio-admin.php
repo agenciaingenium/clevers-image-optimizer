@@ -6,8 +6,13 @@ if (!defined('ABSPATH')) {
 
 class CIO_Admin
 {
-    public function __construct()
+    /** @var CIO_Optimizer */
+    private $optimizer;
+
+    public function __construct(CIO_Optimizer $optimizer)
     {
+        $this->optimizer = $optimizer;
+
         add_action('admin_menu', [$this, 'add_admin_menu']);
         add_action('admin_init', [$this, 'register_settings']);
     }
@@ -98,9 +103,33 @@ class CIO_Admin
 
         $rules_active = cio_rules_exist();
         $avif_supported = function_exists('imageavif');
+        $queue_count = $this->optimizer->get_queue_count();
         ?>
         <div class="wrap">
             <h1><?php esc_html_e('Clever Image Optimizer', 'clevers-image-optimizer'); ?></h1>
+
+            <?php settings_errors('cio_messages'); ?>
+
+            <?php if ($queue_count > 0) : ?>
+                <div class="notice notice-info">
+                    <p>
+                        <?php
+                        echo esc_html(
+                            sprintf(
+                                /* translators: %d: número de imágenes en cola */
+                                _n(
+                                    'Hay %d imagen pendiente de optimización en background.',
+                                    'Hay %d imágenes pendientes de optimización en background.',
+                                    $queue_count,
+                                    'clevers-image-optimizer'
+                                ),
+                                $queue_count
+                            )
+                        );
+                        ?>
+                    </p>
+                </div>
+            <?php endif; ?>
 
             <form method="post" action="options.php">
                 <?php settings_fields('cio_settings_group'); ?>
@@ -204,7 +233,6 @@ class CIO_Admin
             cio_remove_htaccess_rules();
             add_settings_error('cio_messages', 'cio_message', __('Reglas eliminadas del .htaccess.', 'clevers-image-optimizer'), 'updated');
         }
-
-        settings_errors('cio_messages');
+        // Los mensajes se renderizan dentro de settings_page() en la posición correcta del DOM.
     }
 }

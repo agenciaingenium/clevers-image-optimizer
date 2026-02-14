@@ -45,11 +45,27 @@ class CIO_Optimizer
 
     public function enqueue_attachments(array $attachment_ids)
     {
-        $queued = 0;
-        foreach ($this->normalize_attachment_id_list($attachment_ids) as $attachment_id) {
-            if ($this->enqueue_attachment($attachment_id)) {
-                $queued++;
+        $ids_to_add = $this->normalize_attachment_id_list($attachment_ids);
+
+        if (empty($ids_to_add)) {
+            return 0;
+        }
+
+        // Leer la cola una sola vez para evitar múltiples writes a DB en bucle.
+        $queue = $this->get_queue();
+        $original_count = count($queue);
+
+        foreach ($ids_to_add as $id) {
+            if (!in_array($id, $queue, true)) {
+                $queue[] = $id;
             }
+        }
+
+        $queued = count($queue) - $original_count;
+
+        if ($queued > 0) {
+            $this->save_queue($queue);
+            $this->schedule_queue_processing();
         }
 
         return $queued;
@@ -61,7 +77,10 @@ class CIO_Optimizer
             return;
         }
 
-        set_transient(self::LOCK_KEY, 1, MINUTE_IN_SECONDS);
+        // Duración del lock = time_limit + 30 s de margen para evitar ejecuciones paralelas
+        // si el procesamiento tarda exactamente el límite configurado.
+        $time_limit = $this->get_time_limit();
+        set_transient(self::LOCK_KEY, 1, $time_limit + 30);
 
         $queue = $this->get_queue();
         if (empty($queue)) {
@@ -70,7 +89,7 @@ class CIO_Optimizer
         }
 
         $batch_limit = $this->get_batch_limit();
-        $time_limit = $this->get_time_limit();
+        // $time_limit ya fue obtenido arriba para calcular la duración del lock.
         $start = microtime(true);
         $processed = 0;
 
@@ -174,7 +193,9 @@ class CIO_Optimizer
             $optimizerChain = OptimizerChainFactory::create();
             $optimizerChain->optimize($file);
         } catch (\Throwable $e) {
-            error_log('[Clever Image Optimizer] ' . $e->getMessage());
+            if (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
+                error_log('[Clever Image Optimizer] optimize_file error: ' . $e->getMessage());
+            }
         }
     }
 
@@ -220,6 +241,14 @@ class CIO_Optimizer
         $quality = $this->get_avif_quality();
         imageavif($img, $avif, $quality);
         imagedestroy($img);
+    }
+
+    /**
+     * Devuelve la cantidad de adjuntos pendientes en la cola.
+     */
+    public function get_queue_count()
+    {
+        return count($this->get_queue());
     }
 
     public function normalize_attachment_id_list(array $attachment_ids)

@@ -34,6 +34,13 @@ class CIO_Media_Library
             return;
         }
 
+        // Mostrar la columna solo para imágenes JPEG/PNG soportadas por el plugin.
+        $mime = get_post_mime_type($post_id);
+        if (!in_array($mime, ['image/jpeg', 'image/png'], true)) {
+            echo '<span style="color:#999;">—</span>';
+            return;
+        }
+
         $stats = get_post_meta($post_id, '_cio_stats', true);
 
         if ($stats && !empty($stats['original_size'])) {
@@ -97,7 +104,12 @@ class CIO_Media_Library
             return;
         }
 
-        $count = absint(wp_unslash($_REQUEST['cio_bulk_optimized']));
+        // Verificar que el referrer es válido para evitar mensajes falsos via URL externa.
+        if (!isset($_REQUEST['_wpnonce']) || !wp_verify_nonce(sanitize_key($_REQUEST['_wpnonce']), 'bulk-media')) {
+            return;
+        }
+
+        $count = absint($_REQUEST['cio_bulk_optimized']);
 
         printf(
             '<div id="message" class="updated notice is-dismissible"><p>%s</p></div>',

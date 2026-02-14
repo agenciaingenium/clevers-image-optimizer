@@ -15,6 +15,13 @@ function cio_get_rules_block()
 <IfModule mod_rewrite.c>
 RewriteEngine On
 
+# Servir AVIF cuando el navegador lo soporta y el archivo existe (mayor compresión que WebP)
+RewriteCond %{HTTP_ACCEPT} image/avif
+RewriteCond %{REQUEST_FILENAME} \.(jpe?g|png)$
+RewriteCond %{REQUEST_FILENAME}.avif -f
+RewriteRule ^(.+)\.(jpe?g|png)$ $1.avif [T=image/avif,E=accept_avif:1,L]
+
+# Servir WebP como fallback cuando el navegador lo soporta y el archivo existe
 RewriteCond %{HTTP_ACCEPT} image/webp
 RewriteCond %{REQUEST_FILENAME} \.(jpe?g|png)$
 RewriteCond %{REQUEST_FILENAME}.webp -f
@@ -23,6 +30,7 @@ RewriteRule ^(.+)\.(jpe?g|png)$ $1.webp [T=image/webp,E=accept_webp:1,L]
 
 <IfModule mod_headers.c>
 Header append Vary Accept env=accept_webp
+Header append Vary Accept env=accept_avif
 </IfModule>
 # END Clever_Image_Optimizer
 HTA;
@@ -78,7 +86,7 @@ function cio_remove_htaccess_rules()
         return;
     }
 
-    $pattern = '/# BEGIN Clever_Image_Optimizer(.|\n)*?# END Clever_Image_Optimizer/';
+    $pattern = '/# BEGIN Clever_Image_Optimizer[\s\S]*?# END Clever_Image_Optimizer/';
     $cleaned = preg_replace($pattern, '', $contents);
 
     if ($cleaned !== null) {

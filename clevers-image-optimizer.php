@@ -37,7 +37,7 @@ function cio_init()
     $optimizer = new CIO_Optimizer();
 
     if (is_admin()) {
-        new CIO_Admin();
+        new CIO_Admin($optimizer);
         new CIO_Media_Library($optimizer);
     }
 }
