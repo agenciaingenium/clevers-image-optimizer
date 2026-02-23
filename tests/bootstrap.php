@@ -106,4 +106,5 @@ if (!function_exists('trailingslashit')) {
     }
 }
 
+require_once dirname(__DIR__) . '/includes/class-cio-utils.php';
 require_once dirname(__DIR__) . '/includes/class-cio-optimizer.php';
