@@ -42,9 +42,12 @@ final class Path
      *
      * @var array<string, string>
      */
-    private static array $buffer = [];
+    private static $buffer = [];
 
-    private static int $bufferSize = 0;
+    /**
+     * @var int
+     */
+    private static $bufferSize = 0;
 
     /**
      * Canonicalizes the given path.
@@ -346,30 +349,50 @@ final class Path
         $extension = ltrim($extension, '.');
 
         // No extension for paths
-        if (str_ends_with($path, '/')) {
+        if ('/' === substr($path, -1)) {
             return $path;
         }
 
         // No actual extension in path
-        if (!$actualExtension) {
-            return $path.(str_ends_with($path, '.') ? '' : '.').$extension;
+        if (empty($actualExtension)) {
+            return $path.('.' === substr($path, -1) ? '' : '.').$extension;
         }
 
         return substr($path, 0, -\strlen($actualExtension)).$extension;
     }
 
-    /**
-     * Returns whether the given path is absolute.
-     */
     public static function isAbsolute(string $path): bool
     {
-        return '' !== $path && (strspn($path, '/\\', 0, 1)
-            || (\strlen($path) > 3 && ctype_alpha($path[0])
-                && ':' === $path[1]
-                && strspn($path, '/\\', 2, 1)
-            )
-            || null !== parse_url($path, \PHP_URL_SCHEME)
-        );
+        if ('' === $path) {
+            return false;
+        }
+
+        // Strip scheme
+        if (false !== ($schemeSeparatorPosition = strpos($path, '://')) && 1 !== $schemeSeparatorPosition) {
+            $path = substr($path, $schemeSeparatorPosition + 3);
+        }
+
+        $firstCharacter = $path[0];
+
+        // UNIX root "/" or "\" (Windows style)
+        if ('/' === $firstCharacter || '\\' === $firstCharacter) {
+            return true;
+        }
+
+        // Windows root
+        if (\strlen($path) > 1 && ctype_alpha($firstCharacter) && ':' === $path[1]) {
+            // Special case: "C:"
+            if (2 === \strlen($path)) {
+                return true;
+            }
+
+            // Normal case: "C:/ or "C:\"
+            if ('/' === $path[2] || '\\' === $path[2]) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public static function isRelative(string $path): bool
@@ -417,11 +440,11 @@ final class Path
     public static function makeAbsolute(string $path, string $basePath): string
     {
         if ('' === $basePath) {
-            throw new InvalidArgumentException(\sprintf('The base path must be a non-empty string. Got: "%s".', $basePath));
+            throw new InvalidArgumentException(sprintf('The base path must be a non-empty string. Got: "%s".', $basePath));
         }
 
         if (!self::isAbsolute($basePath)) {
-            throw new InvalidArgumentException(\sprintf('The base path "%s" is not an absolute path.', $basePath));
+            throw new InvalidArgumentException(sprintf('The base path "%s" is not an absolute path.', $basePath));
         }
 
         if (self::isAbsolute($path)) {
@@ -511,12 +534,12 @@ final class Path
         // If the passed path is absolute, but the base path is not, we
         // cannot generate a relative path
         if ('' !== $root && '' === $baseRoot) {
-            throw new InvalidArgumentException(\sprintf('The absolute path "%s" cannot be made relative to the relative path "%s". You should provide an absolute base path instead.', $path, $basePath));
+            throw new InvalidArgumentException(sprintf('The absolute path "%s" cannot be made relative to the relative path "%s". You should provide an absolute base path instead.', $path, $basePath));
         }
 
         // Fail if the roots of the two paths are different
         if ($baseRoot && $root !== $baseRoot) {
-            throw new InvalidArgumentException(\sprintf('The path "%s" cannot be made relative to "%s", because they have different roots ("%s" and "%s").', $path, $basePath, $root, $baseRoot));
+            throw new InvalidArgumentException(sprintf('The path "%s" cannot be made relative to "%s", because they have different roots ("%s" and "%s").', $path, $basePath, $root, $baseRoot));
         }
 
         if ('' === $relativeBasePath) {
@@ -551,7 +574,7 @@ final class Path
      */
     public static function isLocal(string $path): bool
     {
-        return '' !== $path && !str_contains($path, '://');
+        return '' !== $path && false === strpos($path, '://');
     }
 
     /**
@@ -615,7 +638,7 @@ final class Path
 
                 // Prevent false positives for common prefixes
                 // see isBasePath()
-                if (str_starts_with($path.'/', $basePath.'/')) {
+                if (0 === strpos($path.'/', $basePath.'/')) {
                     // next path
                     continue 2;
                 }
@@ -643,12 +666,12 @@ final class Path
             if (null === $finalPath) {
                 // For first part we keep slashes, like '/top', 'C:\' or 'phar://'
                 $finalPath = $path;
-                $wasScheme = str_contains($path, '://');
+                $wasScheme = (false !== strpos($path, '://'));
                 continue;
             }
 
             // Only add slash if previous part didn't end with '/' or '\'
-            if (!\in_array(substr($finalPath, -1), ['/', '\\'], true)) {
+            if (!\in_array(substr($finalPath, -1), ['/', '\\'])) {
                 $finalPath .= '/';
             }
 
@@ -694,7 +717,7 @@ final class Path
         // Don't append a slash for the root "/", because then that root
         // won't be discovered as common prefix ("//" is not a prefix of
         // "/foobar/").
-        return str_starts_with($ofPath.'/', rtrim($basePath, '/').'/');
+        return 0 === strpos($ofPath.'/', rtrim($basePath, '/').'/');
     }
 
     /**
@@ -763,7 +786,7 @@ final class Path
         $length = \strlen($path);
 
         // Remove and remember root directory
-        if (str_starts_with($path, '/')) {
+        if (0 === strpos($path, '/')) {
             $root .= '/';
             $path = $length > 1 ? substr($path, 1) : '';
         } elseif ($length > 1 && ctype_alpha($path[0]) && ':' === $path[1]) {
