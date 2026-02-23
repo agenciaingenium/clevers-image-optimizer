@@ -8,24 +8,87 @@ if (!defined('MINUTE_IN_SECONDS')) {
     define('MINUTE_IN_SECONDS', 60);
 }
 
-$stubbed_functions = [
-    'add_filter',
-    'add_action',
-    'get_transient',
-    'set_transient',
-    'delete_transient',
-    'get_option',
-    'update_option',
-    'wp_next_scheduled',
-    'wp_schedule_single_event',
-    'wp_get_attachment_metadata',
-    'wp_upload_dir',
-    'update_post_meta',
-];
+if (!function_exists('add_filter')) {
+    function add_filter(...$args)
+    {
+        return null;
+    }
+}
 
-foreach ($stubbed_functions as $function_name) {
-    if (!function_exists($function_name)) {
-        eval(sprintf('function %s(...$args) { return null; }', $function_name));
+if (!function_exists('add_action')) {
+    function add_action(...$args)
+    {
+        return null;
+    }
+}
+
+if (!function_exists('get_transient')) {
+    function get_transient(...$args)
+    {
+        return null;
+    }
+}
+
+if (!function_exists('set_transient')) {
+    function set_transient(...$args)
+    {
+        return null;
+    }
+}
+
+if (!function_exists('delete_transient')) {
+    function delete_transient(...$args)
+    {
+        return null;
+    }
+}
+
+if (!function_exists('get_option')) {
+    function get_option(...$args)
+    {
+        return null;
+    }
+}
+
+if (!function_exists('update_option')) {
+    function update_option(...$args)
+    {
+        return null;
+    }
+}
+
+if (!function_exists('wp_next_scheduled')) {
+    function wp_next_scheduled(...$args)
+    {
+        return null;
+    }
+}
+
+if (!function_exists('wp_schedule_single_event')) {
+    function wp_schedule_single_event(...$args)
+    {
+        return null;
+    }
+}
+
+if (!function_exists('wp_get_attachment_metadata')) {
+    function wp_get_attachment_metadata(...$args)
+    {
+        return null;
+    }
+}
+
+if (!function_exists('wp_upload_dir')) {
+    function wp_upload_dir(...$args)
+    {
+        return null;
+    }
+}
+
+if (!function_exists('update_post_meta')) {
+    function update_post_meta(...$args)
+    {
+        return null;
     }
 }
 

@@ -1,0 +1,59 @@
+name: Deploy to WordPress.org SVN
+
+on:
+  release:
+    types: [ published ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer
+
+      - name: Composer install (no-dev)
+        if: hashFiles('composer.json') != ''
+        run: composer install --no-dev --prefer-dist --no-interaction --no-progress
+
+      - name: Validate plugin version matches release tag
+        shell: bash
+        run: |
+          HEADER_VERSION=$(
+            grep -Ei '^[[:space:]]*[*#/]{0,2}[[:space:]]*Version:[[:space:]]*[0-9]+([.][0-9]+){1,3}' -m1 "clevers-image-optimizer.php" \
+            | sed -E 's/.*Version:[[:space:]]*([0-9]+([.][0-9]+){1,3}).*/\1/' \
+            || true
+          )
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+
+          echo "Header Version: ${HEADER_VERSION}"
+          echo "Tag Version: ${TAG_VERSION}"
+
+          if [ -z "${HEADER_VERSION}" ]; then
+            echo "::error::Could not read plugin header version."
+            exit 1
+          fi
+
+          if [ "${{ github.event_name }}" = "release" ] && [ "${HEADER_VERSION}" != "${TAG_VERSION}" ]; then
+            echo "::error::Plugin header version does not match the release tag."
+            exit 1
+          fi
+
+      - name: Deploy plugin to WordPress.org
+        uses: 10up/action-wordpress-plugin-deploy@stable
+        env:
+          SLUG: clevers-image-optimizer
+          SVN_USERNAME: ${{ secrets.WPORG_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.WPORG_PASSWORD }}

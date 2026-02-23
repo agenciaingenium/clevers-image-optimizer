@@ -1,7 +1,8 @@
 <?php
+// phpcs:ignoreFile -- CLI maintenance script, not loaded by WordPress runtime.
 /**
  * Bump version en:
- * - clevers-product-carousel.php (header Version)
+ * - clevers-image-optimizer.php (header Version)
  * - readme.txt (Stable tag)
  *
  * Uso:
@@ -86,7 +87,10 @@ function bump_readme_stable_tag(string $file, string $newVersion): void {
 }
 
 // Ejecutar updates
-bump_plugin_header_version($root . '/clevers-product-carousel.php', $newVersion);
+bump_plugin_header_version($root . '/clevers-image-optimizer.php', $newVersion);
 bump_readme_stable_tag($root . '/readme.txt', $newVersion);
 
 echo "\nListo. Revisa los cambios con: git diff\n";
+if (!defined('ABSPATH') && PHP_SAPI !== 'cli' && PHP_SAPI !== 'phpdbg') {
+    exit;
+}

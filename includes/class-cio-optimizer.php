@@ -203,6 +203,7 @@ class CIO_Optimizer
             $optimizerChain->optimize($file);
         } catch (\Throwable $e) {
             if (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Only logs in debug mode.
                 error_log('[Clever Image Optimizer] optimize_file error: ' . $e->getMessage());
             }
         }
@@ -325,6 +326,7 @@ class CIO_Optimizer
         // PENDIENTE 4: Reemplazamos la supresión de errores con @ por manejo
         // explícito mediante set_error_handler para capturar fallos sin silenciarlos.
         $read_error = null;
+        // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- Used to capture image warnings without @.
         set_error_handler(static function ($errno, $errstr) use (&$read_error) {
             $read_error = $errstr;
             return true;
@@ -334,12 +336,14 @@ class CIO_Optimizer
 
         if ($content === false || $content === '') {
             if ($read_error && defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Only logs in debug mode.
                 error_log('[Clever Image Optimizer] create_image_resource file_get_contents error: ' . $read_error);
             }
             return null;
         }
 
         $parse_error = null;
+        // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- Used to capture image warnings without @.
         set_error_handler(static function ($errno, $errstr) use (&$parse_error) {
             $parse_error = $errstr;
             return true;
@@ -349,6 +353,7 @@ class CIO_Optimizer
 
         if ($img === false) {
             if ($parse_error && defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Only logs in debug mode.
                 error_log('[Clever Image Optimizer] create_image_resource imagecreatefromstring error: ' . $parse_error);
             }
             return null;

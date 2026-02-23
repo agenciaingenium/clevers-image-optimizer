@@ -48,3 +48,11 @@ wp-config.php
 #/wp-content/themes
 
 .phpunit.result.cache
+
+# Plugin release/build artifacts
+/dist/
+/dist-*/
+/svn-dist/
+/svn-dist-*/
+/cio-stage-*/
+/clevers-image-optimizer/

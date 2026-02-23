@@ -118,6 +118,7 @@ class CIO_Media_Library
 
         printf(
             '<div id="message" class="updated notice is-dismissible"><p>%s</p></div>',
+            // translators: %d: Number of images queued for background optimization.
             esc_html(sprintf(__('%d imágenes encoladas para optimización en background.', 'clevers-image-optimizer'), $count))
         );
     }

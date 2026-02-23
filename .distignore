@@ -1,0 +1,16 @@
+.git
+.github
+.gitignore
+.gitattributes
+.distignore
+.phpunit.result.cache
+.idea
+.DS_Store
+bin
+tests
+phpunit.xml.dist
+README.md
+composer.json
+composer.lock
+vendor/bin
+node_modules

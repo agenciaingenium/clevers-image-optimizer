@@ -1,54 +1,56 @@
-=== Clevers Image Optimizer ===
+=== Clever Image Optimizer ===
 Contributors: cleversdevs
 Donate link: https://clevers.dev
-Tags: images, optimizer, webp, avif, performance, media
+Tags: image optimization, webp, avif, media library, performance
 Requires at least: 6.0
-Tested up to: 6.8
+Tested up to: 6.9
 Stable tag: 0.3.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
+Clever Image Optimizer compresses local WordPress images and generates modern WebP and optional AVIF files.
+
 == Description ==
-Clevers Image Optimizer optimiza imágenes locales en WordPress y genera formatos modernos (`.webp` y opcionalmente `.avif`).
+Clever Image Optimizer optimizes local WordPress images and generates modern formats (`.webp` and optional `.avif`).
 
-Desde la versión 0.3.0 el procesamiento se ejecuta en background con cola y límites de lote/tiempo para evitar bloqueos en cargas masivas.
+Since version 0.3.0, processing runs in the background with queueing and batch/time limits to avoid admin timeouts during large uploads.
 
-= Características =
-* Optimización local del archivo original (JPG/PNG).
-* Generación de WebP.
-* Generación de AVIF opcional.
-* Reglas `.htaccess` para entrega transparente.
-* Acción masiva en Biblioteca para encolar optimizaciones.
-* Procesamiento en segundo plano con límites configurables.
+= Features =
+* Local optimization of original JPG/PNG files.
+* WebP generation.
+* Optional AVIF generation.
+* `.htaccess` rules for transparent delivery.
+* Media Library bulk action to queue optimization jobs.
+* Background processing with configurable limits.
 
-= Política Composer/Vendor =
-Este plugin usa Composer como fuente de verdad de dependencias.
+= Composer/Vendor policy =
+This plugin uses Composer as the source of truth for dependencies.
 
-* En desarrollo/CI: instalar dependencias con `composer install`.
-* En release: el ZIP publicado incluye `vendor/` para entornos WordPress sin Composer.
+* Development/CI: install dependencies with `composer install`.
+* Release: the published ZIP includes `vendor/` for WordPress environments without Composer.
 
 == Installation ==
-1. Sube el plugin a `/wp-content/plugins/clevers-image-optimizer` o instálalo desde el ZIP de release.
-2. Actívalo en WordPress.
-3. Ve a `Ajustes > Clever Image Optimizer`.
-4. Configura calidad WebP/AVIF y límites del proceso en background.
+1. Upload the plugin to `/wp-content/plugins/clevers-image-optimizer` or install it from the release ZIP.
+2. Activate it in WordPress.
+3. Go to `Settings > Clever Image Optimizer`.
+4. Configure WebP/AVIF quality and background processing limits.
 
 == Frequently Asked Questions ==
-= ¿Cómo funciona el procesamiento en background? =
-Las imágenes nuevas y acciones masivas se encolan. Un evento programado procesa la cola por lotes (`Lote por ejecución`) y respeta un máximo de tiempo (`Límite de tiempo por ejecución`).
+= How does background processing work? =
+New images and bulk actions are queued. A scheduled event processes the queue in batches (`Batch size`) and respects a maximum runtime (`Time limit per run`).
 
-= ¿Qué pasa si no hay soporte AVIF? =
-El plugin muestra el estado en ajustes. Si `imageavif` no está disponible, AVIF no se generará.
+= What if AVIF is not supported on my server? =
+The plugin shows capability status in settings. If `imageavif` is not available, AVIF files are not generated.
 
-= ¿Necesito Composer en producción? =
-No, si usas el ZIP de release oficial. Sí lo necesitas para desarrollo local y CI.
+= Do I need Composer in production? =
+No, if you use the official release ZIP. Composer is only needed for local development and CI.
 
 == Changelog ==
 = 0.3.0 =
-* Added: cola de optimización en background con límites de lote y tiempo.
-* Added: acción masiva ahora encola trabajos (no bloquea request admin).
-* Added: tests unitarios con PHPUnit.
-* Added: workflow CI (lint + tests).
-* Changed: requisitos mínimos y hardening de sanitización/escaping en admin.
-* Changed: inicialización de plugin y carga de text domain.
+* Added: background optimization queue with batch/time limits.
+* Added: Media Library bulk action now queues jobs (non-blocking admin request).
+* Added: PHPUnit unit tests.
+* Added: CI workflow (lint + tests).
+* Changed: minimum requirements and admin sanitization/escaping hardening.
+* Changed: plugin bootstrap initialization.

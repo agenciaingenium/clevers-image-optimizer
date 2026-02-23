@@ -3,6 +3,7 @@ name: Build & Attach Release ZIP
 on:
   release:
     types: [ published ]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -91,22 +92,19 @@ jobs:
 
       - name: Stage plugin files
         run: |
+          DISTIGNORE_ARGS=""
+          while IFS= read -r line || [ -n "$line" ]; do
+            case "$line" in
+              ""|\#*) continue ;;
+            esac
+            DISTIGNORE_ARGS="$DISTIGNORE_ARGS --exclude=$line"
+          done < .distignore
+
+          DISTIGNORE_ARGS="$DISTIGNORE_ARGS --exclude=$PLUGIN_SLUG --exclude=dist --exclude=svn-dist"
+
           rsync -a \
-            --exclude ".git" \
-            --exclude ".github" \
-            --exclude ".idea" \
-            --exclude "bin" \
-            --exclude ".gitignore" \
-            --exclude ".gitattributes" \
-            --exclude "node_modules" \
-            --exclude "vendor/bin" \
-            --exclude "tests" \
-            --exclude ".DS_Store" \
-            --exclude "*.lock" \
+            $DISTIGNORE_ARGS \
             ./ "./$PLUGIN_SLUG"
-          if [ -d "vendor" ]; then
-            rsync -a vendor "./$PLUGIN_SLUG/vendor"
-          fi
           if [ -d "dist" ] && [ "$PLUGIN_SLUG" != "dist" ]; then
             rsync -a dist "./$PLUGIN_SLUG/dist"
           fi
