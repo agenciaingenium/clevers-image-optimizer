@@ -49,6 +49,9 @@ wp-config.php
 
 .phpunit.result.cache
 
+# Composer dependencies
+/vendor/
+
 # Plugin release/build artifacts
 /dist/
 /dist-*/
