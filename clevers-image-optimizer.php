@@ -23,6 +23,7 @@ if (file_exists(__DIR__ . '/vendor/autoload.php')) {
 
 require_once plugin_dir_path(__FILE__) . 'includes/htaccess.php';
 require_once plugin_dir_path(__FILE__) . 'includes/class-cio-utils.php';
+require_once plugin_dir_path(__FILE__) . 'includes/class-cio-logger.php';
 require_once plugin_dir_path(__FILE__) . 'includes/class-cio-optimizer.php';
 require_once plugin_dir_path(__FILE__) . 'includes/class-cio-admin.php';
 require_once plugin_dir_path(__FILE__) . 'includes/class-cio-media-library.php';
