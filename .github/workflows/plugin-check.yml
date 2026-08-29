@@ -1,0 +1,22 @@
+name: WordPress.org plugin check
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  plugin-check:
+    name: Plugin check (WordPress.org standards)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Run WordPress.org plugin check
+        uses: wp-cli/wordpress-org-plugin@latest
+        with:
+          version: latest
+        env:
+          WP_CLI_PHP_ARGS: '-d memory_limit=512M'
