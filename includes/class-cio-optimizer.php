@@ -202,10 +202,10 @@ class CIO_Optimizer
             $optimizerChain = OptimizerChainFactory::create();
             $optimizerChain->optimize($file);
         } catch (\Throwable $e) {
-            if (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
-                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Only logs in debug mode.
-                error_log('[Clever Image Optimizer] optimize_file error: ' . $e->getMessage());
-            }
+            CIO_Logger::warn('optimize_file failed', [
+                'file'  => $file,
+                'error' => $e->getMessage(),
+            ], 'optimizer');
         }
     }
 
@@ -335,9 +335,11 @@ class CIO_Optimizer
         restore_error_handler();
 
         if ($content === false || $content === '') {
-            if ($read_error && defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
-                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Only logs in debug mode.
-                error_log('[Clever Image Optimizer] create_image_resource file_get_contents error: ' . $read_error);
+            if ($read_error !== null) {
+                CIO_Logger::debug('create_image_resource file_get_contents failed', [
+                    'file'  => $file,
+                    'error' => $read_error,
+                ], 'image_reader');
             }
             return null;
         }
@@ -352,9 +354,11 @@ class CIO_Optimizer
         restore_error_handler();
 
         if ($img === false) {
-            if ($parse_error && defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
-                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Only logs in debug mode.
-                error_log('[Clever Image Optimizer] create_image_resource imagecreatefromstring error: ' . $parse_error);
+            if ($parse_error !== null) {
+                CIO_Logger::debug('create_image_resource imagecreatefromstring failed', [
+                    'file'  => $file,
+                    'error' => $parse_error,
+                ], 'image_reader');
             }
             return null;
         }
