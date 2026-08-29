@@ -1,0 +1,15 @@
+parameters:
+    level: 3
+    paths:
+        - includes
+    treatPhpDocTypesAsCertain: false
+    bootstrapFiles:
+        - phpstan-stubs.php
+    excludePaths:
+        analyse:
+            - includes/htaccess.php
+    ignoreErrors:
+        -
+            identifier: function.notFound
+        -
+            identifier: class.notFound

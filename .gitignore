@@ -52,6 +52,9 @@ wp-config.php
 # Composer dependencies
 /vendor/
 
+# Local PHPStan cache
+.phpstan.cache
+
 # Plugin release/build artifacts
 /dist/
 /dist-*/
